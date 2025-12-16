@@ -35,7 +35,7 @@ def main():
 
     # Create text to embed (simple & effective)
     texts = [
-        f"{row['name']}"
+        f"{row['name']} assessment"
         for _, row in df.iterrows()
     ]
 

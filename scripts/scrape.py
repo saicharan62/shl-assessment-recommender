@@ -1,10 +1,10 @@
 """
 scrape.py
 
-Scrapes SHL Individual Test Solutions from the SHL product catalog
-and saves them into a clean CSV file.
+Scrapes SHL Individual Test Solutions by iterating
+through paginated catalog pages and parsing HTML.
 
-This script is meant to be run once (or occasionally).
+No JavaScript execution, no private APIs.
 """
 
 import requests
@@ -14,94 +14,96 @@ from time import sleep
 
 BASE_URL = "https://www.shl.com"
 CATALOG_URL = "https://www.shl.com/solutions/products/product-catalog/"
-
 OUTPUT_PATH = "data/shl_catalog.csv"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; SHL-Scraper/1.0)"
+}
 
 
 def get_soup(url: str) -> BeautifulSoup:
-    """
-    Fetches a URL and returns a BeautifulSoup object.
-    """
-    response = requests.get(url, timeout=15)
+    response = requests.get(url, headers=HEADERS, timeout=20)
     response.raise_for_status()
     return BeautifulSoup(response.text, "html.parser")
 
 
-def is_individual_solution(card) -> bool:
+def extract_product_links(start: int):
     """
-    Returns True if the product card corresponds to
-    an Individual Test Solution.
-
-    We explicitly exclude 'Pre-packaged Job Solutions'.
+    Extracts product detail links from one catalog page.
     """
-    category = card.find("span", class_="product-type")
-    if not category:
-        return False
+    url = f"{CATALOG_URL}?start={start}"
+    soup = get_soup(url)
 
-    return "Individual" in category.get_text(strip=True)
+    cards = soup.select("a.product-card")
+    links = []
+
+    for card in cards:
+        href = card.get("href")
+        if href:
+            links.append(BASE_URL + href)
+
+    return links
 
 
 def parse_product_page(url: str) -> dict:
     """
-    Parses a single assessment detail page and extracts
-    required fields.
+    Extracts required fields from a single product page.
     """
     soup = get_soup(url)
 
-    def safe_text(selector, default=""):
+    def text(selector):
         el = soup.select_one(selector)
-        return el.get_text(strip=True) if el else default
+        return el.get_text(strip=True) if el else ""
 
     return {
-        "name": safe_text("h1"),
+        "name": text("h1"),
         "url": url,
-        "description": safe_text(".product-description"),
-        "test_type": safe_text(".test-type"),  # K / P
-        "duration": safe_text(".duration"),
-        "remote_support": safe_text(".remote-testing"),
-        "adaptive_support": safe_text(".adaptive-testing"),
+        "description": text(".product-description"),
+        "test_type": text("span.test-type"),
+        "duration": text("span.duration"),
+        "remote_support": text("span.remote-testing"),
+        "adaptive_support": text("span.adaptive-testing"),
     }
 
 
-def scrape_catalog() -> pd.DataFrame:
-    """
-    Main scraping logic:
-    - Loads catalog page
-    - Finds all product cards
-    - Filters Individual Test Solutions
-    - Visits each product page
-    """
-    print("Loading SHL product catalog...")
-    soup = get_soup(CATALOG_URL)
+def main():
+    all_links = []
+    start = 0
+    page_size = 12
 
-    product_cards = soup.select(".product-card")
-    print(f"Found {len(product_cards)} product cards")
+    print("Fetching catalog pages...")
+
+    while True:
+        links = extract_product_links(start)
+        if not links:
+            break
+
+        all_links.extend(links)
+        print(f"Collected {len(links)} links from page starting at {start}")
+
+        start += page_size
+        sleep(0.5)
+
+    print(f"\nTotal product links found: {len(all_links)}")
 
     records = []
 
-    for card in product_cards:
-        if not is_individual_solution(card):
-            continue
-
-        link = card.find("a", href=True)
-        if not link:
-            continue
-
-        product_url = BASE_URL + link["href"]
-
+    for i, url in enumerate(all_links, 1):
         try:
-            record = parse_product_page(product_url)
+            record = parse_product_page(url)
+
+            # Exclude pre-packaged solutions
+            if "Pre-packaged" in record["name"]:
+                continue
+
             records.append(record)
-            print(f"Scraped: {record['name']}")
-            sleep(0.5)  # be polite to the server
+            print(f"[{i}] Scraped: {record['name']}")
+            sleep(0.5)
+
         except Exception as e:
-            print(f"Failed to scrape {product_url}: {e}")
+            print(f"Failed to scrape {url}: {e}")
 
-    return pd.DataFrame(records)
-
-
-def main():
-    df = scrape_catalog()
+    df = pd.DataFrame(records)
 
     print(f"\nTotal individual assessments scraped: {len(df)}")
 
