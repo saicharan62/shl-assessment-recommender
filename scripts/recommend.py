@@ -59,8 +59,8 @@ class SHLRecommender:
         for idx in indices[0]:
             item = self.metadata[idx]
             results.append({
-                "name": item["name"],
-                "url": item["url"]
+                "assessment_name": item["name"],
+                "assessment_url": item["url"]
             })
 
         return results
