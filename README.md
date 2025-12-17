@@ -157,7 +157,7 @@ A minimal HTML frontend is provided under the `frontend/` directory for quick lo
 ├── scripts/                  # Data prep, indexing, recommendation & evaluation scripts
 ├── models/                   # FAISS index and metadata
 ├── data/                     # Dataset and CSV predictions
-├── frontend/                 # Minimal HTML frontend (optional)
+├── ui/                 # Minimal HTML frontend (optional)
 ├── requirements.txt
 └── README.md
 ```
