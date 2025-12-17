@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SHL Assessment Recommender</title>
+  <style>
+    body { font-family: Arial; max-width: 800px; margin: 40px auto; }
+    textarea { width: 100%; height: 100px; }
+    button { margin-top: 10px; padding: 8px 16px; }
+    ul { margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h2>SHL GenAI Assessment Recommender</h2>
+
+  <textarea id="query" placeholder="Enter job description or query..."></textarea>
+  <br>
+  <button onclick="recommend()">Recommend</button>
+
+  <ul id="results"></ul>
+
+  <script>
+    async function recommend() {
+      const query = document.getElementById("query").value;
+      const resultsEl = document.getElementById("results");
+      resultsEl.innerHTML = "";
+
+      const res = await fetch("http://127.0.0.1:8000/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+
+      const data = await res.json();
+
+      data.recommendations.forEach(r => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="${r.assessment_url}" target="_blank">${r.assessment_name}</a>`;
+        resultsEl.appendChild(li);
+      });
+    }
+  </script>
+
+</body>
+</html>
