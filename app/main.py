@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 # Load recommender ONCE at startup
-recommender = SHLRecommender(top_k=10)
+recommender = None
 
 
 # -------- Request / Response Models --------
@@ -51,8 +51,13 @@ def health():
 
 @app.post("/recommend", response_model=RecommendResponse)
 def recommend(req: RecommendRequest):
+    global recommender
+
     if not req.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+    if recommender is None:
+        recommender = SHLRecommender(top_k=10)
 
     raw_results = recommender.recommend(req.query)
 
