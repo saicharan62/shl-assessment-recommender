@@ -162,18 +162,57 @@ A minimal HTML frontend is provided under the `frontend/` directory for quick lo
 └── README.md
 ```
 
+
+## 8. Deployment & Access URLs
+
+To ensure the solution is easy to evaluate and test, the system is deployed publicly.
+
+### API Endpoint (FastAPI)
+
+The recommendation API is deployed on **Hugging Face Spaces** and can be queried programmatically:
+```
+https://charansai62-shl-assessment-recommender.hf.space/recommend
+
+```
+
+This endpoint is intended for automated testing and returns deterministic JSON responses.
+
+A health endpoint is also exposed:
+```
+https://charansai62-shl-assessment-recommender.hf.space/health
+
+```
+### Web Application Frontend
+
+A lightweight **Streamlit-based frontend** is deployed to allow quick manual testing of queries and to visually inspect recommendations:
+```
+https://shl-assessment-recommender-solution.streamlit.app/
+```
+
+This frontend is provided for demonstration and manual validation only; the API endpoint should be used for automated evaluation.
+
 ---
 
-## 8. Notes & Limitations
+## 9. Technology Stack
 
-* Only publicly available catalog information is used.
-* Assessment metadata such as duration or test type is not enforced due to inconsistent availability.
-* The system is designed to be deterministic, simple, and easy to test.
+* Python 3.10.9
+* FastAPI – backend API framework
+* FAISS (CPU) – fast similarity search
+* Sentence-Transformers – semantic text embeddings
+* Streamlit – lightweight frontend for rapid prototyping
+* Hugging Face Spaces – cloud deployment
 
 ---
 
-## 9. Final Remarks
+## 10. Automated Evaluation Readiness
 
-This solution prioritizes **clarity, correctness, and robustness** over complexity. All required components — API, evaluation logic, and CSV output — are included, along with supporting scripts for transparency.
+The API design, response schema, and CSV output strictly follow the formats described in the assignment appendix. The system is deterministic and stateless at inference time, making it suitable for:
 
+* automated API testing
+* batch evaluation using CSV inputs
+* reproducible scoring across multiple runs
+
+No manual intervention is required once the service is running.
 Thank you for reviewing this submission.
+
+---
